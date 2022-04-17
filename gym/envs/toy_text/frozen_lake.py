@@ -28,7 +28,7 @@ MAPS = {
 }
 
 
-def generate_random_map(size=8, p=0.8):
+def generate_random_map(size=25, p=0.9):
     """Generates a random valid map (one that has a path from start to goal)
     :param size: size of each side of the grid
     :param p: probability that a tile is frozen
@@ -139,14 +139,15 @@ class FrozenLakeEnv(Env):
 
     metadata = {"render_modes": ["human", "ansi", "rgb_array"], "render_fps": 4}
 
-    def __init__(self, desc=None, map_name="4x4", is_slippery=True):
+    def __init__(self, desc=None, map_name="4x4", is_slippery=True, is_q=False):
         if desc is None and map_name is None:
             desc = generate_random_map()
         elif desc is None:
             desc = MAPS[map_name]
         self.desc = desc = np.asarray(desc, dtype="c")
         self.nrow, self.ncol = nrow, ncol = desc.shape
-        self.reward_range = (0, 1)
+        self.reward_range = (-100, 100)
+        print('is_q=', is_q)
 
         nA = 4
         nS = nrow * ncol
@@ -175,7 +176,19 @@ class FrozenLakeEnv(Env):
             newstate = to_s(newrow, newcol)
             newletter = desc[newrow, newcol]
             done = bytes(newletter) in b"GH"
+
+            # if not is_q:
+            #     reward = float(newletter == b"G")
+            # else:
+            #     reward = float(newletter == b"G")
             reward = float(newletter == b"G")
+            if newletter == b"G":
+                reward = float(100.0)
+            elif newletter == b"H":
+                reward = float(-100.0)
+            elif newletter == b"F":
+                reward = float(-0.1)
+
             return newstate, reward, done
 
         for row in range(nrow):
